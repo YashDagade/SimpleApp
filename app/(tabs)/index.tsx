@@ -33,6 +33,11 @@ export default function SleepScreen() {
     }
   }, []);
 
+  const handleTemperatureChange = (value: number) => {
+    console.log('Temperature changed to:', value);
+    setRoomTemperature(value);
+  };
+
   const saveSleepEntry = () => {
     const entry: SleepEntry = {
       date: currentDate,
@@ -97,9 +102,12 @@ export default function SleepScreen() {
               min={60}
               max={80}
               value={roomTemperature}
-              onValueChange={setRoomTemperature}
+              onValueChange={handleTemperatureChange}
               labels={['Cold (60°F)', 'Comfortable', 'Warm (80°F)']}
             />
+            <Text style={styles.temperatureDisplay}>
+              Current temperature: {roomTemperature}°F
+            </Text>
           </Card>
         </Animated.View>
 
@@ -211,5 +219,11 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  temperatureDisplay: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 8,
   },
 });

@@ -1,12 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import Animated, {
-  useAnimatedGestureHandler,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
-import { PanGestureHandler } from 'react-native-gesture-handler';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ViewStyle, Dimensions, TouchableOpacity } from 'react-native';
 
 interface CustomSliderProps {
   min: number;
@@ -27,57 +20,78 @@ export const CustomSlider: React.FC<CustomSliderProps> = ({
   style,
   labels,
 }) => {
-  const width = 300;
-  const thumbSize = 28;
-  const sliderWidth = width - thumbSize;
+  // Local state for the current display value
+  const [displayValue, setDisplayValue] = useState(value);
   
-  const range = max - min;
-  const valueToPosition = (val: number) => ((val - min) / range) * sliderWidth;
-  const positionToValue = (pos: number) => {
-    const rawValue = min + (pos / sliderWidth) * range;
-    return Math.round(rawValue / step) * step;
+  // Helper function to render the steps
+  const renderSteps = () => {
+    // Create 5 steps between min and max
+    const stepCount = 5;
+    const steps = [];
+    const stepSize = (max - min) / (stepCount - 1);
+    
+    for (let i = 0; i < stepCount; i++) {
+      const stepValue = min + i * stepSize;
+      
+      // Check if this step is the active one
+      const isActive = Math.abs(stepValue - displayValue) < stepSize / 2;
+      
+      steps.push(
+        <TouchableOpacity
+          key={i}
+          style={[styles.step, isActive ? styles.activeStep : {}]}
+          onPress={() => handleSelectValue(stepValue)}
+        >
+          <Text style={isActive ? styles.activeStepText : styles.stepText}>
+            {Math.round(stepValue)}
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+    
+    return steps;
   };
-
-  const translateX = useSharedValue(valueToPosition(value));
-
-  const panGestureHandler = useAnimatedGestureHandler({
-    onStart: (_, ctx: any) => {
-      ctx.startX = translateX.value;
-    },
-    onActive: (event, ctx) => {
-      let newPosition = ctx.startX + event.translationX;
-      newPosition = Math.max(0, Math.min(sliderWidth, newPosition));
-      translateX.value = newPosition;
-    },
-    onEnd: () => {
-      const newValue = positionToValue(translateX.value);
-      translateX.value = withSpring(valueToPosition(newValue));
-      onValueChange(newValue);
-    },
-  });
-
-  const thumbStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
-
-  const progressStyle = useAnimatedStyle(() => {
-    return {
-      width: translateX.value + thumbSize / 2,
-    };
-  });
-
+  
+  // Handler for selecting a value
+  const handleSelectValue = (newValue: number) => {
+    setDisplayValue(newValue);
+    onValueChange(newValue);
+  };
+  
+  // Helper function to increment or decrement value
+  const adjustValue = (increment: boolean) => {
+    const newValue = increment 
+      ? Math.min(max, displayValue + step)
+      : Math.max(min, displayValue - step);
+    
+    setDisplayValue(newValue);
+    onValueChange(newValue);
+  };
+  
   return (
     <View style={[styles.container, style]}>
-      <View style={styles.sliderContainer}>
-        <View style={styles.track} />
-        <Animated.View style={[styles.progress, progressStyle]} />
-        <PanGestureHandler onGestureEvent={panGestureHandler}>
-          <Animated.View style={[styles.thumb, thumbStyle]}>
-            <Text style={styles.thumbText}>{positionToValue(translateX.value)}</Text>
-          </Animated.View>
-        </PanGestureHandler>
+      <View style={styles.controls}>
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={() => adjustValue(false)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>-</Text>
+        </TouchableOpacity>
+        
+        <Text style={styles.valueText}>{Math.round(displayValue)}°F</Text>
+        
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={() => adjustValue(true)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>+</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <View style={styles.track}>
+        {renderSteps()}
       </View>
       
       {labels && (
@@ -96,48 +110,70 @@ export const CustomSlider: React.FC<CustomSliderProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginVertical: 16,
+    alignItems: 'center',
   },
-  sliderContainer: {
+  controls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    width: '100%',
+    paddingHorizontal: 16,
+  },
+  button: {
+    width: 40,
     height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF',
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+  buttonText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  valueText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
   },
   track: {
-    height: 6,
-    borderRadius: 3,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 16,
+  },
+  step: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: '#E8E8E8',
-  },
-  progress: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#007AFF',
-    position: 'absolute',
-  },
-  thumb: {
-    position: 'absolute',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 3,
+    justifyContent: 'center',
   },
-  thumbText: {
+  activeStep: {
+    backgroundColor: '#007AFF',
+  },
+  stepText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#007AFF',
+    color: '#666',
+  },
+  activeStepText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: 'white',
   },
   labelsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 16,
+    width: '100%',
+    paddingHorizontal: 16,
   },
   label: {
     fontSize: 12,
     color: '#8E8E93',
+    textAlign: 'center',
   },
 }); 

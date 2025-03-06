@@ -39,6 +39,7 @@ function RootLayoutNav() {
     return null;
   }
 
+  // Ensure GestureHandlerRootView covers the entire screen
   return (
     <GestureHandlerRootView style={styles.container}>
       <AppProvider>
