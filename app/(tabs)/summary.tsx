@@ -56,7 +56,7 @@ const getSleepEmoji = (quality: string | null) => {
 };
 
 export default function SummaryScreen() {
-  const { getRecentEntries } = useAppContext();
+  const { getRecentEntries, sleepEntries, mealEntries, exerciseEntries } = useAppContext();
   const [recentDays] = useState(getLastNDays(DAYS_TO_SHOW));
   const [recentData, setRecentData] = useState<{
     sleep: SleepEntry[];
@@ -64,10 +64,11 @@ export default function SummaryScreen() {
     exercise: ExerciseEntry[];
   }>({ sleep: [], meals: [], exercise: [] });
 
+  // Load data initially and whenever relevant data changes
   useEffect(() => {
     const data = getRecentEntries(DAYS_TO_SHOW);
     setRecentData(data);
-  }, []);
+  }, [sleepEntries, mealEntries, exerciseEntries]); // Re-run when any of the data arrays change
 
   // Find entry for a specific date
   const findSleepEntry = (date: string) => {
