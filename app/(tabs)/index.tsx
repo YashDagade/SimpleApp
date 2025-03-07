@@ -10,8 +10,8 @@ import { CustomSlider } from '@/components/ui/CustomSlider';
 import { useAppContext, SleepEntry } from '@/context/AppContext';
 
 export default function SleepScreen() {
-  const { addSleepEntry, userSettings, getTodayEntries } = useAppContext();
-  const [currentDate] = useState(new Date().toISOString().split('T')[0]);
+  const { addSleepEntry, userSettings, getTodayEntries, sleepEntries } = useAppContext();
+  const currentDate = new Date().toISOString().split('T')[0];
   const [sleepQualityIndex, setSleepQualityIndex] = useState<number | null>(null);
   const [roomTemperature, setRoomTemperature] = useState(70);
   const [thoughts, setThoughts] = useState('');
@@ -21,7 +21,7 @@ export default function SleepScreen() {
   const sleepQualityValues: Array<'great' | 'tired' | 'sleepy'> = ['great', 'tired', 'sleepy'];
 
   useEffect(() => {
-    // Load today's sleep entry if it exists
+    // Load today's sleep entry whenever sleepEntries changes
     const entries = getTodayEntries();
     if (entries.sleep) {
       if (entries.sleep.sleepQuality) {
@@ -31,7 +31,7 @@ export default function SleepScreen() {
       setRoomTemperature(entries.sleep.roomTemperature);
       setThoughts(entries.sleep.thoughts);
     }
-  }, []);
+  }, [sleepEntries, getTodayEntries]); // Re-run when sleepEntries changes
 
   const handleTemperatureChange = (value: number) => {
     console.log('Temperature changed to:', value);

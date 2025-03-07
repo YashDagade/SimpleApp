@@ -23,6 +23,20 @@ const MealCard: React.FC<MealCardProps> = ({ title, mealType, onSave, initialDat
   const [notes, setNotes] = useState(initialData?.notes ?? '');
   const [imageUri, setImageUri] = useState(initialData?.imageUri);
 
+  // Update state when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setEaten(initialData.eaten);
+      setNotes(initialData.notes || '');
+      setImageUri(initialData.imageUri);
+    } else {
+      // Reset to defaults if no initialData
+      setEaten(false);
+      setNotes('');
+      setImageUri(undefined);
+    }
+  }, [initialData]);
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -93,20 +107,20 @@ const MealCard: React.FC<MealCardProps> = ({ title, mealType, onSave, initialDat
 };
 
 export default function FoodScreen() {
-  const { addMealEntry, getTodayEntries } = useAppContext();
-  const [currentDate] = useState(new Date().toISOString().split('T')[0]);
+  const { addMealEntry, getTodayEntries, mealEntries } = useAppContext();
+  // Get the current date each time the component renders instead of just once
+  const currentDate = new Date().toISOString().split('T')[0];
   const [todayMeals, setTodayMeals] = useState<MealEntry[]>([]);
 
   useEffect(() => {
-    // Load today's meal entries if they exist
+    // Load today's meal entries whenever mealEntries changes
     const entries = getTodayEntries();
-    if (entries.meals.length > 0) {
-      setTodayMeals(entries.meals);
-    }
-  }, []);
+    setTodayMeals(entries.meals);
+  }, [mealEntries, getTodayEntries]);  // Re-run when mealEntries changes
 
   const getMealByType = (type: MealType): MealEntry | undefined => {
-    return todayMeals.find(meal => meal.mealType === type);
+    const meal = todayMeals.find(meal => meal.mealType === type);
+    return meal;
   };
 
   const handleSaveMeal = (mealData: Partial<MealEntry>) => {

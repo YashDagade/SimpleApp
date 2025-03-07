@@ -9,20 +9,20 @@ import { Card } from '@/components/ui/Card';
 import { useAppContext, ExerciseEntry } from '@/context/AppContext';
 
 export default function ExerciseScreen() {
-  const { addExerciseEntry, getTodayEntries } = useAppContext();
-  const [currentDate] = useState(new Date().toISOString().split('T')[0]);
+  const { addExerciseEntry, getTodayEntries, exerciseEntries } = useAppContext();
+  const currentDate = new Date().toISOString().split('T')[0];
   const [exerciseCompleted, setExerciseCompleted] = useState(false);
   const [notes, setNotes] = useState('');
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    // Load today's exercise entry if it exists
+    // Load today's exercise entry whenever exerciseEntries changes
     const entries = getTodayEntries();
     if (entries.exercise) {
       setExerciseCompleted(entries.exercise.completed);
       setNotes(entries.exercise.notes);
     }
-  }, []);
+  }, [exerciseEntries, getTodayEntries]); // Re-run when exerciseEntries changes
 
   const saveExerciseEntry = () => {
     const entry: ExerciseEntry = {
